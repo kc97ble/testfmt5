@@ -163,3 +163,41 @@ def output_when_no_test_cases_found(is_simple=False):
         return
     print "No test cases have been found."
     print "There is nothing to be done."
+
+def cmp_general(x, y):
+    """ (any, any) -> int
+    Returns 0 if x==y, -1 if x<y, 1 if x>y """
+    
+    return 0 if x==y else (-1 if x<y else 1)
+
+def parse_number(x, i):
+    assert x[i].isdigit()
+    rslt = ''
+    while i < len(x) and x[i].isdigit():
+        rslt += x[i]
+        i += 1
+    return int(rslt), i
+
+def cmp_human(x, y):
+    i = j = 0
+    while True:
+        if i==len(x) or j==len(y):
+            return cmp_general(len(x)-i, len(y)-j)
+        if x[i].isdigit() and y[j].isdigit():
+            xx, i = parse_number(x, i)
+            yy, j = parse_number(y, j)
+            if xx != yy:
+                return cmp_general(xx, yy)
+        else:
+            if x[i] != y[j]:
+                return cmp_general(x[i], y[j])
+            i += 1
+            j += 1
+
+if __name__ == '__main__':
+    assert cmp_human('1', '01') == 0
+    assert cmp_human('10.in', '1.in') == 1
+    assert cmp_human('aa-aaaa.in', 'aaa-aa.in') == -1
+    assert cmp_human('1a.in', '1aa.in') == -1
+    assert cmp_human('a1.in', 'a10.in') == -1
+    assert cmp_human('A_1.in', 'AA_1.in') == 1

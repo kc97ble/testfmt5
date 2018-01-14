@@ -3,12 +3,12 @@
 """ testfmt5.py
 
 Usage:
-    testfmt5.py apple/ -i '*.in' -o '*.ans' detect
-    testfmt5.py apple/ -i '*.in' -o '*.ans' convert -I '*.in' -O '*.ok' --preview
-    testfmt5.py apple/ -i '*.in' -o '*.ans' convert -I '*.in' -O '*.ok'
-    testfmt5.py apple.zip -i '*.in' -o '*.ans' detect
-    testfmt5.py apple.zip -i '*.in' -o '*.ans' convert -I '*.in' -O '*.ok' --preview
-    testfmt5.py apple.zip -i '*.in' -o '*.ans' convert -I '*.in' -O '*.ok'
+    testfmt5.py apple/ -i '*.in' -o '*.ans' --detect
+    testfmt5.py apple/ -i '*.in' -o '*.ans' -I '*.in' -O '*.ok' --preview
+    testfmt5.py apple/ -i '*.in' -o '*.ans' -I '*.in' -O '*.ok'
+    testfmt5.py apple.zip -i '*.in' -o '*.ans' --detect
+    testfmt5.py apple.zip -i '*.in' -o '*.ans' -I '*.in' -O '*.ok' --preview
+    testfmt5.py apple.zip -i '*.in' -o '*.ans' -I '*.in' -O '*.ok'
 """
 
 import os
@@ -28,7 +28,7 @@ def get_ifiles_ofiles(files, ifmt, ofmt):
     assert isinstance(ifmt, format.Format)
     assert isinstance(ofmt, format.Format)
 
-    files = sorted(files)
+    #files = sorted(files)
     ifiles, ofiles = [], []
 
     for x in files:
@@ -108,7 +108,14 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--sofmt', type=format.Format)
     parser.add_argument('-I', '--difmt', type=format.Format)
     parser.add_argument('-O', '--dofmt', type=format.Format)
+    parser.add_argument('-f', '--infix-fmt', default='', help="Infix format")
+    parser.add_argument('-a', '--alphabet', action='store_true', help="Sort alphabetically")
     args = parser.parse_args()
+
+if args.difmt is not None:
+    args.difmt.infix_fmt = args.infix_fmt
+if args.dofmt is not None:
+    args.dofmt.infix_fmt = args.infix_fmt
 
 if args.reverse:
     args.sifmt, args.difmt = args.difmt, args.sifmt
@@ -124,6 +131,11 @@ if args.path != '' and zipfile.is_zipfile(args.path):
 else:
     os.chdir(args.path or '.')
     file_list = FileList.from_working_directory()
+
+if args.alphabet:
+    file_list.files.sort(misc.cmp_general)
+else:
+    file_list.files.sort(misc.cmp_human)
 
 if args.detect == True:
     assert (args.sifmt is not None) and (args.sofmt is not None)

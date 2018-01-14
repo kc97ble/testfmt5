@@ -39,6 +39,7 @@ class BaseFileList(object):
         move_files_indirectly(self, src, dst, **kwargs)
     """
     
+    #TODO: Handle natural sorting order
     def __init__(self, files):
         self.files = list(files)
     
