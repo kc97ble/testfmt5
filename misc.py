@@ -122,20 +122,23 @@ def output_src_and_dst(src, dst, is_simple=False):
         for i in range(n):
             print "'{}' -> '{}'".format(src[i], dst[i])
 
-def output_preview_result(success, num_test_cases, is_simple=False):
+def output_preview_result(success, num_test_cases, simple=False):
     """
     Display relevant information after previewing.
     """
-    if is_simple:
+    if simple:
         return
+        
     print ""
     print "Number of test case(s): {}".format(num_test_cases)
     if success:
         print "OK. All tests passed."
     else:
         print "FAILED. Some test failed."
-    print "Because of the preview mode, no file operations have been "\
-        "performed, the test data has not been changed."
+    print ""
+    print "We are in preview mode:"
+    print "- NO file operations are performed."
+    print "- Test data is NOT changed."
 
 def output_convert_result(success, num_test_cases, is_simple=False):
     """
@@ -143,6 +146,7 @@ def output_convert_result(success, num_test_cases, is_simple=False):
     """
     if is_simple:
         return
+        
     print ""
     print "Number of test case(s): {}.".format(num_test_cases)
     if success:

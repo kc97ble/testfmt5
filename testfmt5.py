@@ -76,7 +76,7 @@ def do_convert_execute(file_list, src, dst, simple=False):
         misc.output_convert_result(success, num_test_cases)
         sys.exit(0 if success else 1)
 
-def do_convert(file_list, sifmt, sofmt, difmt, dofmt, preview=False, simple=False):
+def do_convert(file_list, sifmt, sofmt, difmt, dofmt, preview=False, simple=False, **kwargs):
     """ (FileList|ZipFileList, Format, Format, Format, Format, ...) -> None)
     Moves files in preview mode or real mode. """
 
@@ -95,7 +95,7 @@ def do_convert(file_list, sifmt, sofmt, difmt, dofmt, preview=False, simple=Fals
         do_convert_preview(file_list, src, dst, simple)
     else:
         do_convert_execute(file_list, src, dst, simple)
-
+"""
 if __name__ == '__main__':
     #TODO: make this more friendly
     parser = argparse.ArgumentParser()
@@ -112,34 +112,95 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--alphabet', action='store_true', help="Sort alphabetically")
     args = parser.parse_args()
 
-if args.difmt is not None:
-    args.difmt.infix_fmt = args.infix_fmt
-if args.dofmt is not None:
-    args.dofmt.infix_fmt = args.infix_fmt
+    if args.difmt is not None:
+        args.difmt.inffmt = args.inffmt
+    if args.dofmt is not None:
+        args.dofmt.inffmt = args.inffmt
 
-if args.reverse:
-    args.sifmt, args.difmt = args.difmt, args.sifmt
-    args.sofmt, args.dofmt = args.dofmt, args.sofmt
-    args.reverse = False
+    if args.reverse:
+        args.sifmt, args.difmt = args.difmt, args.sifmt
+        args.sofmt, args.dofmt = args.dofmt, args.sofmt
+        args.reverse = False
 
-if args.simple and not args.preview and not args.detect:
-    print >> sys.stderr, "-s is for -d or -p only."
+    if args.simple and not args.preview and not args.detect:
+        print >> sys.stderr, "-s is for -d or -p only."
 
-if args.path != '' and zipfile.is_zipfile(args.path):
-    os.chdir(os.path.dirname(args.path) or '.')
-    file_list = ZipFileList(os.path.basename(args.path))
-else:
-    os.chdir(args.path or '.')
-    file_list = FileList.from_working_directory()
+    if args.path != '' and zipfile.is_zipfile(args.path):
+        os.chdir(os.path.dirname(args.path) or '.')
+        file_list = ZipFileList(os.path.basename(args.path))
+    else:
+        os.chdir(args.path or '.')
+        file_list = FileList.from_working_directory()
 
-if args.alphabet:
-    file_list.files.sort(misc.cmp_general)
-else:
-    file_list.files.sort(misc.cmp_human)
+    if args.alphabet:
+        file_list.files.sort(misc.cmp_general)
+    else:
+        file_list.files.sort(misc.cmp_human)
 
-if args.detect == True:
-    assert (args.sifmt is not None) and (args.sofmt is not None)
-    do_detect(file_list, args.sifmt, args.sofmt, args.simple)
-else:
-    assert all(x is not None for x in [args.sifmt, args.sofmt, args.difmt, args.dofmt])
-    do_convert(file_list, args.sifmt, args.sofmt, args.difmt, args.dofmt, args.preview, args.simple)
+    if args.detect == True:
+        assert (args.sifmt is not None) and (args.sofmt is not None)
+        do_detect(file_list, args.sifmt, args.sofmt, args.simple)
+    else:
+        assert all(x is not None for x in [args.sifmt, args.sofmt, args.difmt, args.dofmt])
+        do_convert(file_list, args.sifmt, args.sofmt, args.difmt, args.dofmt, args.preview, args.simple)
+"""
+
+def get_file_list(path, alphabet, **kwargs):
+    assert path != ''
+    if zipfile.is_zipfile(path):
+        os.chdir(os.path.dirname(path) or '.')
+        file_list = ZipFileList(os.path.basename(path))
+    else:
+        os.chdir(path)
+        file_list = FileList.from_working_directory()
+    
+    if alphabet:
+        file_list.files.sort(misc.cmp_general)
+    else:
+        file_list.files.sort(misc.cmp_human)
+    
+    return file_list
+
+def handle_list(args):
+    file_list = get_file_list(**vars(args))
+    print '\n'.join(file_list.files)
+    
+def handle_detect(args):
+    file_list = get_file_list(**vars(args))
+    ifiles, ofiles = get_ifiles_ofiles(file_list.files, args.sifmt, args.sofmt)
+    misc.output_detect_result(ifiles, ofiles, args.simple)
+
+def handle_convert(args):
+    file_list = get_file_list(**vars(args))
+    do_convert(file_list, **vars(args))
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    
+    parser_list = subparsers.add_parser('list')
+    parser_list.add_argument('path')
+    parser_list.add_argument('-a', '--alphabet', action='store_true', help="Sort alphabetically")
+    parser_list.set_defaults(handle=handle_list)
+    
+    parser_detect = subparsers.add_parser('detect')
+    parser_detect.add_argument('path')
+    parser_detect.add_argument('sifmt', type=format.Format)
+    parser_detect.add_argument('sofmt', type=format.Format)
+    parser_detect.add_argument('-a', '--alphabet', action='store_true', help="Sort alphabetically")
+    parser_detect.add_argument('-s', '--simple', action='store_true', help="Use simple output format")
+    parser_detect.set_defaults(handle=handle_detect)
+    
+    parser_convert = subparsers.add_parser('convert')
+    parser_convert.add_argument('path')
+    parser_convert.add_argument('sifmt', type=format.Format)
+    parser_convert.add_argument('sofmt', type=format.Format)
+    parser_convert.add_argument('difmt', type=format.Format)
+    parser_convert.add_argument('dofmt', type=format.Format)
+    parser_convert.add_argument('-a', '--alphabet', action='store_true', help="Sort alphabetically")
+    parser_convert.add_argument('-s', '--simple', action='store_true', help="Use simple output format")
+    parser_convert.add_argument('-p', '--preview', action='store_true')
+    parser_convert.set_defaults(handle=handle_convert)
+
+    args = parser.parse_args()
+    args.handle(args)
