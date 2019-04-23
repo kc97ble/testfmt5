@@ -1,19 +1,33 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 class Format:
     
-    def __init__(self, text):
+    def __init__(self, prefix, inffmt, suffix):
+        self.prefix = prefix
+        self.inffmt = inffmt
+        self.suffix = suffix
+    
+    @classmethod
+    def from_string(self, text):
         assert text.count('*') in (1, 2)
-        ll = text.index('*')
-        rr = text.rindex('*')
-        self.prefix = text[:ll]
-        self.suffix = text[rr+1:]
-        self.inffmt = '' if ll==rr else text[ll+1:rr]
+        ll, rr = text.index('*'), text.rindex('*')
+        prefix, suffix = text[:ll], text[rr+1:]
+        inffmt = '' if ll==rr else text[ll+1:rr]
+        return Format(prefix, inffmt, suffix)
     
     def __repr__(self):
-        if self.infix == '':
-            return "format.Format('{}*{}')".format(self.prefix, self.suffix)
-        return "format.Format('{}*{}*{}')".format(self.prefix, self.inffmt, self.suffix)
+        return 'Format(%s)' % self.__dict__
+    
+    def __str__(self):
+        if self.inffmt == '':
+            return "{}*{}".format(self.prefix, self.suffix)
+        return "{}*{}*{}".format(self.prefix, self.inffmt, self.suffix)
+    
+    def __eq__(this, that):
+        return this.__dict__ == that.__dict__
+    
+    def __ne__(this, that):
+        return this.__dict__ != that.__dict__
     
     def match(self, text):
         return (len(self.prefix) + len(self.suffix) <= len(text) 
@@ -44,17 +58,17 @@ def convert_format_list(items, fmt1, fmt2):
     return [convert_format(items[i], fmt1, fmt2, i) for i in range(len(items))]
     
 if __name__ == '__main__':
-    print Format('t*.in')
-    print Format('t*.in').match('t1.in')
-    print Format('t*.in').match('t.in')
-    print Format('a*a').match('aaa')
-    print Format('a*a').match('aa')
-    print Format('a*a').match('a')
-    print Format('t*.in').infix('t1.in')
-    print Format('t*.in').infix('t.in')
-    print Format('a*a').infix('aaa')
-    print Format('a*a').infix('aa')
-    print Format('a*a').text('aa')
-    print Format('a*a').text('bb')
+    print(Format.from_string('t*.in'))
+    print(Format.from_string('t*.in').match('t1.in'))
+    print(Format.from_string('t*.in').match('t.in'))
+    print(Format.from_string('a*a').match('aaa'))
+    print(Format.from_string('a*a').match('aa'))
+    print(Format.from_string('a*a').match('a'))
+    print(Format.from_string('t*.in').infix('t1.in'))
+    print(Format.from_string('t*.in').infix('t.in'))
+    print(Format.from_string('a*a').infix('aaa'))
+    print(Format.from_string('a*a').infix('aa'))
+    print(Format.from_string('a*a').text('aa'))
+    print(Format.from_string('a*a').text('bb'))
     
     

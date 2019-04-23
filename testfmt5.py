@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """ testfmt5.py
 
@@ -15,15 +15,24 @@ import os
 import sys
 import zipfile
 import argparse
+import functools
 
 import misc
 import format
 import filelist
+import formatpair
 
 from filelist import BaseFileList, FileList, ZipFileList
 
+def best_format_pair(files):
+    return max(
+        formatpair.ALL_KNOWN_FORMAT_PAIRS,
+        key = lambda pair: len(get_ifiles_ofiles(files, pair.ifmt, pair.ofmt)[0])
+    )
+
 def get_ifiles_ofiles(files, ifmt, ofmt):
     """ (list, Format, Format) -> (list, list) """
+
     assert isinstance(files, list)
     assert isinstance(ifmt, format.Format)
     assert isinstance(ofmt, format.Format)
@@ -45,9 +54,17 @@ def get_ifiles_ofiles(files, ifmt, ofmt):
         ofiles.append(y)
     return (ifiles, ofiles)
 
-def do_detect(file_list, sifmt, sofmt, simple=False):
+
+def do_detect(file_list, sifmt, sofmt, simple=False, **kwargs):
     """ (FileList, Format, Format, ...) -> None
     Outputs input and output file list with the given formats. """
+    
+    assert (sifmt is None) == (sofmt is None)
+    if sifmt is None and sofmt is None:
+        pair = best_format_pair(file_list.files)
+        sifmt, sofmt = pair.ifmt, pair.ofmt
+        assert sifmt is not None
+        assert sofmt is not None
     
     ifiles, ofiles = get_ifiles_ofiles(file_list.files, sifmt, sofmt)
     misc.output_detect_result(ifiles, ofiles, simple)
@@ -79,6 +96,17 @@ def do_convert_execute(file_list, src, dst, simple=False):
 def do_convert(file_list, sifmt, sofmt, difmt, dofmt, preview=False, simple=False, **kwargs):
     """ (FileList|ZipFileList, Format, Format, Format, Format, ...) -> None)
     Moves files in preview mode or real mode. """
+    
+    assert (sifmt is None) == (sofmt is None)
+    if sifmt is None and sofmt is None:
+        pair = best_format_pair(file_list.files)
+        sifmt, sofmt = pair.ifmt, pair.ofmt
+        assert sifmt is not None
+        assert sofmt is not None
+        
+    assert (difmt is None) == (dofmt is None)
+    if difmt is None and dofmt is None:
+        difmt, dofmt = formatpair.DEFAULT_IFMT, formatpair.DEFAULT_OFMT
 
     sifiles, sofiles = get_ifiles_ofiles(file_list.files, sifmt, sofmt)
     difiles = format.convert_format_list(sifiles, sifmt, difmt)
@@ -95,55 +123,6 @@ def do_convert(file_list, sifmt, sofmt, difmt, dofmt, preview=False, simple=Fals
         do_convert_preview(file_list, src, dst, simple)
     else:
         do_convert_execute(file_list, src, dst, simple)
-"""
-if __name__ == '__main__':
-    #TODO: make this more friendly
-    parser = argparse.ArgumentParser()
-    parser.add_argument('path', help="Test data directory")
-    parser.add_argument('-d', '--detect', action='store_true')
-    parser.add_argument('-p', '--preview', action='store_true')
-    parser.add_argument('-s', '--simple', action='store_true', help="Use simple output format")
-    parser.add_argument('-r', '--reverse', action='store_true', help="Swap sifmt with difmt, sofmt with dofmt")
-    parser.add_argument('-i', '--sifmt', type=format.Format)
-    parser.add_argument('-o', '--sofmt', type=format.Format)
-    parser.add_argument('-I', '--difmt', type=format.Format)
-    parser.add_argument('-O', '--dofmt', type=format.Format)
-    parser.add_argument('-f', '--infix-fmt', default='', help="Infix format")
-    parser.add_argument('-a', '--alphabet', action='store_true', help="Sort alphabetically")
-    args = parser.parse_args()
-
-    if args.difmt is not None:
-        args.difmt.inffmt = args.inffmt
-    if args.dofmt is not None:
-        args.dofmt.inffmt = args.inffmt
-
-    if args.reverse:
-        args.sifmt, args.difmt = args.difmt, args.sifmt
-        args.sofmt, args.dofmt = args.dofmt, args.sofmt
-        args.reverse = False
-
-    if args.simple and not args.preview and not args.detect:
-        print >> sys.stderr, "-s is for -d or -p only."
-
-    if args.path != '' and zipfile.is_zipfile(args.path):
-        os.chdir(os.path.dirname(args.path) or '.')
-        file_list = ZipFileList(os.path.basename(args.path))
-    else:
-        os.chdir(args.path or '.')
-        file_list = FileList.from_working_directory()
-
-    if args.alphabet:
-        file_list.files.sort(misc.cmp_general)
-    else:
-        file_list.files.sort(misc.cmp_human)
-
-    if args.detect == True:
-        assert (args.sifmt is not None) and (args.sofmt is not None)
-        do_detect(file_list, args.sifmt, args.sofmt, args.simple)
-    else:
-        assert all(x is not None for x in [args.sifmt, args.sofmt, args.difmt, args.dofmt])
-        do_convert(file_list, args.sifmt, args.sofmt, args.difmt, args.dofmt, args.preview, args.simple)
-"""
 
 def get_file_list(path, alphabet, **kwargs):
     assert path != ''
@@ -155,20 +134,21 @@ def get_file_list(path, alphabet, **kwargs):
         file_list = FileList.from_working_directory()
     
     if alphabet:
-        file_list.files.sort(misc.cmp_general)
+        file_list.files.sort(key=functools.cmp_to_key(misc.cmp_general))
     else:
-        file_list.files.sort(misc.cmp_human)
+        file_list.files.sort(key=functools.cmp_to_key(misc.cmp_human))
     
     return file_list
 
 def handle_list(args):
     file_list = get_file_list(**vars(args))
-    print '\n'.join(file_list.files)
+    print('\n'.join(file_list.files))
     
 def handle_detect(args):
     file_list = get_file_list(**vars(args))
-    ifiles, ofiles = get_ifiles_ofiles(file_list.files, args.sifmt, args.sofmt)
-    misc.output_detect_result(ifiles, ofiles, args.simple)
+    #ifiles, ofiles = get_ifiles_ofiles(file_list.files, args.sifmt, args.sofmt)
+    #misc.output_detect_result(ifiles, ofiles, args.simple)
+    do_detect(file_list, **vars(args))
 
 def handle_convert(args):
     file_list = get_file_list(**vars(args))
@@ -185,18 +165,18 @@ if __name__ == '__main__':
     
     parser_detect = subparsers.add_parser('detect')
     parser_detect.add_argument('path')
-    parser_detect.add_argument('sifmt', type=format.Format)
-    parser_detect.add_argument('sofmt', type=format.Format)
+    parser_detect.add_argument('--sifmt', type=format.Format.from_string)
+    parser_detect.add_argument('--sofmt', type=format.Format.from_string)
     parser_detect.add_argument('-a', '--alphabet', action='store_true', help="Sort alphabetically")
     parser_detect.add_argument('-s', '--simple', action='store_true', help="Use simple output format")
     parser_detect.set_defaults(handle=handle_detect)
     
     parser_convert = subparsers.add_parser('convert')
     parser_convert.add_argument('path')
-    parser_convert.add_argument('sifmt', type=format.Format)
-    parser_convert.add_argument('sofmt', type=format.Format)
-    parser_convert.add_argument('difmt', type=format.Format)
-    parser_convert.add_argument('dofmt', type=format.Format)
+    parser_convert.add_argument('--sifmt', type=format.Format.from_string)
+    parser_convert.add_argument('--sofmt', type=format.Format.from_string)
+    parser_convert.add_argument('--difmt', type=format.Format.from_string)
+    parser_convert.add_argument('--dofmt', type=format.Format.from_string)
     parser_convert.add_argument('-a', '--alphabet', action='store_true', help="Sort alphabetically")
     parser_convert.add_argument('-s', '--simple', action='store_true', help="Use simple output format")
     parser_convert.add_argument('-p', '--preview', action='store_true')

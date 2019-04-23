@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """ filelist.py
 
@@ -67,7 +67,7 @@ class BaseFileList(object):
         if (src not in self.files) or (dst in self.files):
             return False
         if not quiet:
-            print "Moving '{}' -> '{}'".format(src, dst)
+            print("Moving '{}' -> '{}'".format(src, dst))
         self.files[self.files.index(src)] = dst
         return self.really_renames(src, dst) if real else True
         
@@ -127,7 +127,7 @@ class BaseFileList(object):
         n = misc.ensure_equal_len(src, dst)
         pre = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
         sep = '--------'
-        mid = range(n)
+        mid = list(range(n))
         
         for i in range(n):
             t0 = src[i].replace('/', '----').replace('\\', '------')
@@ -150,8 +150,8 @@ class FileList(BaseFileList):
         try:
             os.renames(src, dst)
         except OSError as e:
-            print >> sys.stderr, e.errno
-            print >> sys.stderr, e
+            print(e.errno, file=sys.stderr)
+            print(e, file=sys.stderr)
             return False
         return True
 
@@ -183,7 +183,7 @@ class ZipFileList(BaseFileList):
                 assert src.testzip() == None
                 for name in self.old_name:
                     if not quiet:
-                        print "Writing data of '{}'".format(name)
+                        print("Writing data of '{}'".format(name))
                     data = src.read(self.old_name[name])
                     info = src.getinfo(self.old_name[name])
                     info.filename = name
@@ -208,7 +208,7 @@ class ZipFileList(BaseFileList):
         return True
     
 if __name__ == '__main__':
-    print BaseFileList(['a', 'b', 'c'])
+    print(BaseFileList(['a', 'b', 'c']))
     assert BaseFileList(['a', 'b', 'c']).move_file('a', 'a', quiet=True) == True
     assert BaseFileList(['a', 'b', 'c']).move_file('a', 'b', quiet=True) == False
     assert BaseFileList(['a', 'b', 'c']).move_file('a', 'c', quiet=True) == False

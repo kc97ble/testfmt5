@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import os
 
@@ -79,17 +79,17 @@ def output_detect_result(ifiles, ofiles, is_simple=False):
     n = ensure_equal_len(ifiles, ofiles)
     if is_simple:
         for i in range(n):
-            print ifiles[i]
-            print ofiles[i]
+            print(ifiles[i])
+            print(ofiles[i])
     else:
         for i in range(n):
-            print "'{}', '{}'".format(ifiles[i], ofiles[i])
+            print("'{}', '{}'".format(ifiles[i], ofiles[i]))
 
         if n==0:
-            print "No test cases have been found."
+            print("No test cases have been found.")
         else:
-            print ""
-            print "Number of test case(s): {}.".format(n)
+            print("")
+            print("Number of test case(s): {}.".format(n))
 
 def output_src_and_dst(src, dst, is_simple=False):
     """ (list, list) -> None
@@ -116,11 +116,11 @@ def output_src_and_dst(src, dst, is_simple=False):
     n = ensure_equal_len(src, dst)
     if is_simple:
         for i in range(n):
-            print src[i]
-            print dst[i]
+            print(src[i])
+            print(dst[i])
     else:
         for i in range(n):
-            print "'{}' -> '{}'".format(src[i], dst[i])
+            print("'{}' -> '{}'".format(src[i], dst[i]))
 
 def output_preview_result(success, num_test_cases, simple=False):
     """
@@ -129,16 +129,16 @@ def output_preview_result(success, num_test_cases, simple=False):
     if simple:
         return
         
-    print ""
-    print "Number of test case(s): {}".format(num_test_cases)
+    print("")
+    print("Number of test case(s): {}".format(num_test_cases))
     if success:
-        print "OK. All tests passed."
+        print("OK. All tests passed.")
     else:
-        print "FAILED. Some test failed."
-    print ""
-    print "We are in preview mode:"
-    print "- NO file operations are performed."
-    print "- Test data is NOT changed."
+        print("FAILED. Some test failed.")
+    print("")
+    print("We are in preview mode:")
+    print("- NO file operations are performed.")
+    print("- Test data is NOT changed.")
 
 def output_convert_result(success, num_test_cases, is_simple=False):
     """
@@ -147,26 +147,26 @@ def output_convert_result(success, num_test_cases, is_simple=False):
     if is_simple:
         return
         
-    print ""
-    print "Number of test case(s): {}.".format(num_test_cases)
+    print("")
+    print("Number of test case(s): {}.".format(num_test_cases))
     if success:
-        print "OK. All file operations have been done."
+        print("OK. All file operations have been done.")
     else:
-        print "FAILED. Some file operation failed."
-        print "The test data has been recovered to its original state."
+        print("FAILED. Some file operation failed.")
+        print("The test data has been recovered to its original state.")
 
 def output_status_on_checking_failed(num_test_cases):
-    print ""
-    print "Number of test case(s): {}.".format(num_test_cases)
-    print "FAILED. Some test failed."
-    print "No file operations have been performed."
-    print "The original test data is not modified."
+    print("")
+    print("Number of test case(s): {}.".format(num_test_cases))
+    print("FAILED. Some test failed.")
+    print("No file operations have been performed.")
+    print("The original test data is not modified.")
 
 def output_when_no_test_cases_found(is_simple=False):
     if is_simple:
         return
-    print "No test cases have been found."
-    print "There is nothing to be done."
+    print("No test cases have been found.")
+    print("There is nothing to be done.")
 
 def cmp_general(x, y):
     """ (any, any) -> int
